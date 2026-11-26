@@ -2,6 +2,9 @@ from opendbc.can import CANDefine, CANParser
 from opendbc.car import Bus, create_button_events, structs
 from opendbc.car.chrysler.aol_contract import qualified as aol_qualified
 from opendbc.car.chrysler.values import CUSW_CARS, DBC, STEER_THRESHOLD, RAM_CARS, RAM_HD, ChryslerFlags
+
+# cliftdev/ram-hd: Dalton's lifted Ram 2500 HD Mega Cab only; set to 0.0 for a stock-height HD
+RAM_HD_LIFT_ANGLE_OFFSET_DEG = 3.2
 from opendbc.car.common.conversions import Conversions as CV
 from opendbc.car.interfaces import CarStateBase
 
@@ -75,8 +78,11 @@ class CarState(CarStateBase):
     # steering wheel
     ret.steeringAngleDeg = cp.vl["STEERING"]["STEERING_ANGLE"] + cp.vl["STEERING"]["STEERING_ANGLE_HP"]
     if self.CP.carFingerprint in RAM_HD:
-      # cliftdev/ram-hd: as sunnypilot does for RAM HD, use the main angle signal without the HP component
-      ret.steeringAngleDeg = cp.vl["STEERING"]["STEERING_ANGLE"]
+      # cliftdev/ram-hd: the HD never fills STEERING_ANGLE_HP (nibble always 0 in 72k frames, which reads as a -0.4 deg
+      # bias), so use the 0.5 deg main signal, as sunnypilot does. The lifted truck's clock spring reads 3.2 deg right of
+      # centre when driving straight (vehicle-model fit over 858 segments, every drive -1.2..-5.9, median -3.1); it is
+      # permanent, so correct it here and let paramsd learn only the small residual.
+      ret.steeringAngleDeg = cp.vl["STEERING"]["STEERING_ANGLE"] + RAM_HD_LIFT_ANGLE_OFFSET_DEG
     ret.steeringRateDeg = cp.vl["STEERING"]["STEERING_RATE"]
     ret.steeringTorque = cp.vl["EPS_2"]["COLUMN_TORQUE"]
     ret.steeringTorqueEps = cp.vl["EPS_2"]["EPS_TORQUE_MOTOR"]
