@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs ON the comma: put sunnypilot back.  ssh comma@10.0.0.33 'bash /data/rollback-to-sunnypilot.sh'
+# Runs ON the comma: put sunnypilot back.  ssh comma@10.1.0.82 'bash /data/rollback-to-sunnypilot.sh'
 set -euo pipefail
 if [ "$(cat /data/params/d/IsOnroad 2>/dev/null || echo 0)" = "1" ]; then
   echo "Truck is on (onroad). Park it and turn it off first."; exit 1

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Run on this machine: install the rollback script on the truck's comma, then switch it to StarPilot.
 set -euo pipefail
-HOST=${HOST:-comma@10.0.0.33}
+HOST=${HOST:-comma@10.1.0.82}
 DIR=$(cd "$(dirname "$0")" && pwd)
 SSH=(ssh -o BatchMode=yes -o ConnectTimeout=10 "$HOST")
 
