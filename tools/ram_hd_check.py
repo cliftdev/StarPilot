@@ -78,6 +78,25 @@ def main():
                  if isinstance(n, ast.Assign) and getattr(n.targets[0], "id", "") == "ALLOWED_CARS")
   print("torqued ALLOWED_CARS:", allowed)
   assert cp.brand in allowed
+
+  # The truck's panda latches interruptRateCan2 ~3 s into every drive. StarPilot raises "Controls Mismatch"
+  # for any panda fault not on its per-car allowlist, so the HD must allow that one bit and nothing else.
+  from openpilot.cereal import log
+  from opendbc.car.structs import car
+  from openpilot.starpilot.aol.panda_faults import blocking_fault_list, blocking_fault_mask
+  F = log.PandaState.FaultType
+  sc = cp.safetyConfigs[0]
+  print(f"safety: {sc.safetyModel} param {int(sc.safetyParam)}")
+  live = car.CarParams.new_message(brand=cp.brand, carFingerprint=cp.carFingerprint,
+                                   safetyConfigs=[{"safetyModel": str(sc.safetyModel), "safetyParam": int(sc.safetyParam)}])
+  for p in (cp, live):
+    assert not blocking_fault_list([F.interruptRateCan2], p)
+    assert not blocking_fault_mask(1 << 3, p)
+    assert blocking_fault_list([F.interruptRateCan1], p) and blocking_fault_list([F.relayMalfunction], p)
+    assert blocking_fault_list([F.interruptRateCan2, F.relayMalfunction], p)
+    assert blocking_fault_mask((1 << 3) | (1 << 2), p)
+  assert blocking_fault_list([F.interruptRateCan2], cp15), "Ram 1500 must keep StarPilot's default"
+  print("panda fault policy: interruptRateCan2 allowed on the HD only: OK")
   print("ALL OK")
 
 

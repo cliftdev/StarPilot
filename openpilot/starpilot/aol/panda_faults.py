@@ -31,6 +31,14 @@ def _diagnostic_mask(cp):
       return (1 << 3) if (int(cp.flags) == int(recorded_flags) and
                          len(cp.safetyConfigs) == 1 and int(cp.safetyConfigs[0].safetyParam) == 0xC02 and cp.alternativeExperience == 32 and
                          qualified(cp, marked_only=True)) else 0
+    if cp.brand == 'chrysler':
+      from opendbc.car.chrysler.values import CAR as CHRYSLER_CAR, ChryslerSafetyFlags
+      # Ram 2500 HD: the panda latches the CAN2 interrupt-rate diagnostic ~3 s into every drive and
+      # never clears it (all 55 recorded sunnypilot drives, 100% of engaged time, zero EPS faults).
+      # Only that bit, only on the single-panda Chrysler safety mode with the RAM_HD flag.
+      return (1 << 3) if (cp.carFingerprint == CHRYSLER_CAR.RAM_HD_5TH_GEN and len(cp.safetyConfigs) == 1 and
+                          str(cp.safetyConfigs[0].safetyModel) == 'chrysler' and
+                          int(cp.safetyConfigs[0].safetyParam) & int(ChryslerSafetyFlags.RAM_HD)) else 0
     from opendbc.car.gm.aol import qualified_gm
     from opendbc.car.gm.values import CAR, is_volt_sdgm_profile, is_bolt_present_no_acc_pedal_profile
     if cp.brand != 'gm' or len(cp.safetyConfigs) != 1:
