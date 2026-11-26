@@ -8,6 +8,13 @@ fi
 STAMP=$(date +%Y%m%d-%H%M)
 mv /data/openpilot "/data/starpilot-$STAMP"
 mv /data/sunnypilot-backup /data/openpilot
+# StarPilot's first boot archives sunnypilot's settings and learned values; put the pre-switch copy back.
+# (/data/params/d is a symlink to /data/params/d_tmp, so the real copy is in the backup's d_tmp)
+B=$(ls -d /data/params-sunnypilot-* 2>/dev/null | sort | tail -1)
+if [ -n "$B" ] && [ -d "$B/d_tmp" ]; then
+  echo "restoring sunnypilot settings from $B/d_tmp"
+  rsync -a --delete "$B/d_tmp/" /data/params/d_tmp/
+fi
 sync
 echo "sunnypilot restored (StarPilot kept at /data/starpilot-$STAMP). Rebooting; sunnypilot reinstalls its AGNOS first."
 sudo reboot

@@ -46,13 +46,17 @@ def main():
   cp = CarInterface.get_params(CAR.RAM_HD_5TH_GEN, fingerprint, fws, alpha_long=False, is_release=False, docs=False)
   print(f"dashcamOnly={cp.dashcamOnly} wheelbase={cp.wheelbase} centerToFront={cp.centerToFront:.3f} steerRatio={cp.steerRatio} "
         f"tireStiffness F/R={cp.tireStiffnessFront:.0f}/{cp.tireStiffnessRear:.0f} rotInertia={cp.rotationalInertia:.0f} "
-        f"deadzone={cp.lateralTuning.torque.steeringAngleDeadzoneDeg} minSteerSpeed={cp.minSteerSpeed} mass={cp.mass:.0f}")
+        f"deadzone={cp.lateralTuning.torque.steeringAngleDeadzoneDeg} minSteerSpeed={cp.minSteerSpeed} mass={cp.mass:.0f} "
+        f"torque={cp.lateralTuning.torque.latAccelFactor}/{cp.lateralTuning.torque.friction}")
   assert cp.dashcamOnly is False
-  assert abs(cp.wheelbase - 4.08) < 1e-6 and cp.steerRatio == 19.0
+  assert abs(cp.wheelbase - 4.08) < 1e-6 and abs(cp.steerRatio - 17.8) < 1e-6
   assert abs(cp.centerToFront - 4.08 * 0.44) < 1e-6
   assert (round(cp.tireStiffnessFront), round(cp.tireStiffnessRear)) == (65155, 80926)
   # sunnypilot's EnforceTorqueControl reset the 0.25 deg deadzone to 0.0 on the truck, so match what actually drove
   assert cp.lateralTuning.torque.steeringAngleDeadzoneDeg == 0.0
+  # torque model fitted from the truck's logs (tools in ~/comma-logs/tools/torque_fit.py)
+  t = cp.lateralTuning.torque
+  assert abs(t.latAccelFactor - 1.58) < 1e-6 and abs(t.friction - 0.265) < 1e-6, (t.latAccelFactor, t.friction)
   # values read from the truck's own CarParams on sunnypilot
   assert abs(cp.mass - 3541.0) < 0.5 and abs(cp.rotationalInertia - 13826.5) < 1.0 and cp.minSteerSpeed == 16.0
 

@@ -82,9 +82,10 @@ class CarInterface(CarInterfaceBase):
 
     elif candidate == CAR.RAM_HD_5TH_GEN:
       ret.steerActuatorDelay = 0.2
-      # RAM HD specs from sunnypilot, see https://github.com/commaai/openpilot/issues/25389
+      # RAM HD tire stiffness from sunnypilot, see https://github.com/commaai/openpilot/issues/25389 (fit confirms factor 1.0)
       ret.tireStiffnessFactor = 1.0
-      ret.steerRatio = 19.
+      # fitted 17.8 from 400k steady samples on the Mega Cab (both engaged and manual; sunnypilot used 19)
+      ret.steerRatio = 17.8
       # Mega Cab only: 11.1in longer than the crew-cab short-bed wheelbase this platform otherwise assumes,
       # see https://en.wikipedia.org/wiki/Ram_Heavy_Duty_(fifth_generation)#Cab_configurations. Use 3.79 for other cab/bed configs.
       ret.wheelbase = 4.08

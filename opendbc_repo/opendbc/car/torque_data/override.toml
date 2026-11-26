@@ -57,7 +57,9 @@ legend = ["LAT_ACCEL_FACTOR", "MAX_LAT_ACCEL_MEASURED", "FRICTION"]
 
 # Totally new cars
 "RAM_1500_5TH_GEN" = [2.0, 2.0, 0.05]
-"RAM_HD_5TH_GEN" = [1.4, 1.4, 0.05]
+# cliftdev/ram-hd: fitted from 118k engaged points over 858 segments of the Ram 2500 HD Mega Cab (2026-11),
+# torqued method without the sanity clamp (sunnypilot had pinned it at 2.24 / 0.28)
+"RAM_HD_5TH_GEN" = [1.58, 1.4, 0.265]
 "SUBARU_OUTBACK" = [2.0, 1.5, 0.2]
 "CADILLAC_ESCALADE" = [1.899999976158142, 1.842270016670227, 0.1120000034570694]
 "CADILLAC_ESCALADE_ASCM" = [1.899999976158142, 1.842270016670227, 0.1120000034570694]
