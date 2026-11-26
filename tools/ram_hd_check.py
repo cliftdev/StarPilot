@@ -67,6 +67,13 @@ def main():
     assert lateral_supported(cp)
   except ImportError as e:
     print("feature_capabilities import skipped:", e)
+  # learned torque must be usable for Chrysler, as sunnypilot's Live Torque Params toggle allowed
+  import ast
+  src = open(os.path.join(ROOT, "openpilot/selfdrive/locationd/torqued.py")).read()
+  allowed = next(ast.literal_eval(n.value) for n in ast.parse(src).body
+                 if isinstance(n, ast.Assign) and getattr(n.targets[0], "id", "") == "ALLOWED_CARS")
+  print("torqued ALLOWED_CARS:", allowed)
+  assert cp.brand in allowed
   print("ALL OK")
 
 

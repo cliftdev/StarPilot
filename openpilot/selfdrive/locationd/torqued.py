@@ -37,7 +37,9 @@ MIN_BUCKET_POINTS = np.array([100, 300, 500, 500, 500, 500, 300, 100])
 MIN_ENGAGE_BUFFER = 2  # secs
 
 VERSION = 1  # bump this to invalidate old parameter caches
-ALLOWED_CARS = ['toyota', 'hyundai', 'rivian', 'honda', 'volkswagen']
+# cliftdev/ram-hd: chrysler added, matching sunnypilot's Live Torque Params toggle the truck ran with
+# (learned RAM HD latAccelFactor 2.24 / friction 0.28 vs the 1.4 / 0.05 defaults)
+ALLOWED_CARS = ['toyota', 'hyundai', 'rivian', 'honda', 'volkswagen', 'chrysler']
 
 
 def slope2rot(slope):
