@@ -14,12 +14,22 @@ class CarInterface(CarInterfaceBase):
 
   DRIVABLE_GEARS = (structs.CarState.GearShifter.low,)
 
+  @classmethod
+  def get_params(cls, candidate, fingerprint, car_fw, alpha_long, is_release, docs) -> structs.CarParams:
+    ret = super().get_params(candidate, fingerprint, car_fw, alpha_long, is_release, docs)
+    if candidate == CAR.RAM_HD_5TH_GEN:
+      # measured RAM HD tire stiffness (sunnypilot, commaai/openpilot#25389); set after the base class scales it from mass
+      ret.tireStiffnessFront = 65155.
+      ret.tireStiffnessRear = 80926.
+    return ret
+
   @staticmethod
   def _get_params(ret: structs.CarParams, candidate, fingerprint, car_fw, alpha_long, is_release, docs) -> structs.CarParams:
     ret.brand = "chrysler"
 
     # TODO: Chrysler CUSW in dashcam pending comma safety validation and a fix for LKAS fault on disengage
-    ret.dashcamOnly = candidate in (RAM_HD | CUSW_CARS)
+    # cliftdev/ram-hd: RAM HD enabled the way sunnypilot does it (Ram 2500 HD Mega Cab daily driver)
+    ret.dashcamOnly = candidate in CUSW_CARS
 
     # radar parsing needs some work, see https://github.com/commaai/openpilot/issues/26842
     ret.radarUnavailable = True # Bus.radar not in DBC[candidate][Bus.radar]
@@ -72,6 +82,12 @@ class CarInterface(CarInterfaceBase):
 
     elif candidate == CAR.RAM_HD_5TH_GEN:
       ret.steerActuatorDelay = 0.2
+      # RAM HD specs from sunnypilot, see https://github.com/commaai/openpilot/issues/25389
+      ret.tireStiffnessFactor = 1.0
+      ret.steerRatio = 19.
+      # Mega Cab only: 11.1in longer than the crew-cab short-bed wheelbase this platform otherwise assumes,
+      # see https://en.wikipedia.org/wiki/Ram_Heavy_Duty_(fifth_generation)#Cab_configurations. Use 3.79 for other cab/bed configs.
+      ret.wheelbase = 4.08
 
     else:
       raise ValueError(f"Unsupported car: {candidate}")
