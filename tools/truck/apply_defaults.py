@@ -18,6 +18,7 @@ BOOLS = {
   "DisengageOnAccelerator": False,     # sunnypilot DisengageOnAccelerator=0
   "IsLdwEnabled": False,               # sunnypilot IsLdwEnabled=0
   "RecordFront": False,                # sunnypilot RecordFront=0
+  "TurnAssist": False,                 # Ioniq-6-tuned angle assist on signaled turns; untested on the Ram, and it only runs above 36 mph here
 }
 OTHER = {
   "LaneCenterOffset": 0.0,             # Dalton's own line is within StarPilot's 8 cm centering deadband
