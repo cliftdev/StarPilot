@@ -81,7 +81,9 @@ class CarInterface(CarInterfaceBase):
       ret.minSteerSpeed = 0.5
 
     elif candidate == CAR.RAM_HD_5TH_GEN:
-      ret.steerActuatorDelay = 0.2
+      # lagd starts from steerActuatorDelay + 0.2. Its own estimates on this truck had a median of 0.47 s (858 segments on
+      # sunnypilot) but never converged: the driver's hand is on the wheel too often. Start it there, not at 0.40.
+      ret.steerActuatorDelay = 0.27
       # RAM HD tire stiffness from sunnypilot, see https://github.com/commaai/openpilot/issues/25389 (fit confirms factor 1.0)
       ret.tireStiffnessFactor = 1.0
       # fitted 17.8 from 400k steady samples on the Mega Cab (both engaged and manual; sunnypilot used 19)

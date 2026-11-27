@@ -59,10 +59,13 @@ def main():
   assert abs(t.latAccelFactor - 1.58) < 1e-6 and abs(t.friction - 0.265) < 1e-6, (t.latAccelFactor, t.friction)
   # values read from the truck's own CarParams on sunnypilot
   assert abs(cp.mass - 3541.0) < 0.5 and abs(cp.rotationalInertia - 13826.5) < 1.0 and cp.minSteerSpeed == 16.0
+  # lagd's measured median on this truck (0.47 s total delay) as its starting point
+  assert abs(cp.steerActuatorDelay - 0.27) < 1e-6, cp.steerActuatorDelay
 
   # A Ram 1500 must be unaffected by the HD-only changes
   cp15 = CarInterface.get_params(CAR.RAM_1500_5TH_GEN, fingerprint, [], alpha_long=False, is_release=False, docs=False)
   assert cp15.lateralTuning.torque.steeringAngleDeadzoneDeg == 0.0 and abs(cp15.wheelbase - 3.88) < 1e-6
+  assert abs(cp15.steerActuatorDelay - 0.2) < 1e-6
   print("Ram 1500 unchanged: OK")
 
   try:
