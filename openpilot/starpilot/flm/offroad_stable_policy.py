@@ -1269,6 +1269,32 @@ def _current_stable_direction_reversal_count(values: np.ndarray, min_step: float
   return int(np.sum(np.sign(significant[1:]) != np.sign(significant[:-1])))
 
 
+def _swing_reversal_count(values: np.ndarray, min_swing: float) -> int:
+  """Reversals of swings at least min_swing tall (hysteresis), so a signal toggling by one quantisation step counts none."""
+  if len(values) < 3:
+    return 0
+  hi = lo = float(values[0])
+  trend, count = 0, 0
+  for x in (float(v) for v in values[1:]):
+    if trend == 0:
+      hi, lo = max(hi, x), min(lo, x)
+      if x - lo >= min_swing:
+        trend, hi = 1, x
+      elif hi - x >= min_swing:
+        trend, lo = -1, x
+    elif trend == 1:
+      if x > hi:
+        hi = x
+      elif hi - x >= min_swing:
+        count, trend, lo = count + 1, -1, x
+    else:
+      if x < lo:
+        lo = x
+      elif x - lo >= min_swing:
+        count, trend, hi = count + 1, 1, x
+  return count
+
+
 def _tracking_oscillation_windows(samples: list[FLMSample], eligibility: list[bool]) -> list[dict[str, Any]]:
   """Catch sustained highway wobble when the requested path oscillates too."""
   def excursions(series, threshold):
@@ -1364,6 +1390,15 @@ def _current_stable_build_event_summaries(samples: list[FLMSample]) -> tuple[lis
   angle_thresholds = {'low': 0.8, 'mid': 0.55, 'fast': 0.38, 'highway': 0.28}
   error_thresholds = {'low': 0.16, 'mid': 0.12, 'fast': 0.09, 'highway': 0.07}
   output_thresholds = {'low': 0.055, 'mid': 0.045, 'fast': 0.035, 'highway': 0.025}
+  # cliftdev/ram-hd: coarse steering-angle signals (the Ram HD reports 0.5 deg steps) toggle one step back and forth on a
+  # straight road, which alone would read as centre chatter and teach a looser centre. Measure the signal's step from the
+  # data; when it is coarse, require two steps of real movement and ignore one-step reversals. Fine signals are unchanged.
+  angle_steps = np.abs(np.diff(np.asarray(angle, dtype=float)))
+  angle_steps = angle_steps[angle_steps > 1e-6]
+  angle_step = float(np.percentile(angle_steps, 5)) if len(angle_steps) >= 50 else 0.0
+  coarse_angle = angle_step >= 0.2
+  if coarse_angle:
+    angle_thresholds = {band: max(value, 2.0 * angle_step) for band, value in angle_thresholds.items()}
   for start_idx in range(0, max(len(samples) - 20, 1), 10):
     window = samples[start_idx : start_idx + 40]
     if len(window) < 20:
@@ -1389,7 +1424,8 @@ def _current_stable_build_event_summaries(samples: list[FLMSample]) -> tuple[lis
     angle_p2p = float(np.ptp(centered_angles))
     error_p2p = float(np.ptp(error_series))
     output_p2p = float(np.ptp(output_series))
-    angle_reversals = _current_stable_direction_reversal_count(centered_angles, max(angle_thresholds[speed_band] * 0.08, 0.025))
+    angle_reversals = (_swing_reversal_count(centered_angles, 1.9 * angle_step) if coarse_angle else
+                       _current_stable_direction_reversal_count(centered_angles, max(angle_thresholds[speed_band] * 0.08, 0.025)))
     error_reversals = _current_stable_direction_reversal_count(error_series, max(error_thresholds[speed_band] * 0.08, 0.006))
     output_reversals = _current_stable_direction_reversal_count(output_series, max(output_thresholds[speed_band] * 0.08, 0.002))
     angle_evidence = angle_p2p >= angle_thresholds[speed_band] and angle_reversals >= 3

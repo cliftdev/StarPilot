@@ -124,6 +124,15 @@ def main():
   real_px = intr @ view_frame_from_device_frame @ rot_from_euler(rpy) @ np.array([X, Y, h])
   assert np.allclose(cam_px[:2] / cam_px[2], real_px[:2] / real_px[2], atol=1e-6)
   print(f"road camera height correction: x{k:.3f} for Cheddar on the HD only: OK")
+  # steering-pressed filter: a 40 ms road-kick spike is not an override, a held press is (after 60 ms)
+  from opendbc.car.chrysler.carstate import CarState
+  cs = CarState(cp)
+  spike = [cs.update_steering_pressed(i < 4, 5) for i in range(20)]
+  held = [cs.update_steering_pressed(True, 5) for _ in range(10)]
+  assert not any(spike) and held.index(True) == 5, (spike, held)
+  src = open(os.path.join(ROOT, "opendbc_repo/opendbc/car/chrysler/carstate.py")).read()
+  assert "self.update_steering_pressed(abs(ret.steeringTorque) > STEER_THRESHOLD, 5)" in src
+  print("steering-pressed debounce (60 ms) on the HD: OK")
   print("ALL OK")
 
 

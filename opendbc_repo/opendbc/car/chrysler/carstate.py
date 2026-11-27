@@ -86,7 +86,14 @@ class CarState(CarStateBase):
     ret.steeringRateDeg = cp.vl["STEERING"]["STEERING_RATE"]
     ret.steeringTorque = cp.vl["EPS_2"]["COLUMN_TORQUE"]
     ret.steeringTorqueEps = cp.vl["EPS_2"]["EPS_TORQUE_MOTOR"]
-    ret.steeringPressed = abs(ret.steeringTorque) > STEER_THRESHOLD
+    if self.CP.carFingerprint in RAM_HD:
+      # cliftdev/ram-hd: road kicks through the solid front axle put 10-50 ms spikes over the threshold. Unfiltered, each
+      # one is a driver override (Lane Centering resets, torqued/Auto Learn drop data, a kick with the blinker on can start
+      # a lane change). 46-84% of the truck's override onsets lasted < 60 ms. Same 60 ms filter Hyundai/Tesla/Ford use;
+      # replayed on the truck's 100 Hz torque it removes 55-80% of onsets and sees real presses 50 ms later.
+      ret.steeringPressed = self.update_steering_pressed(abs(ret.steeringTorque) > STEER_THRESHOLD, 5)
+    else:
+      ret.steeringPressed = abs(ret.steeringTorque) > STEER_THRESHOLD
 
     # cruise state
     cp_cruise = cp_cam if self.CP.carFingerprint in RAM_CARS else cp
