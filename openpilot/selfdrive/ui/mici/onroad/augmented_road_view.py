@@ -22,6 +22,7 @@ from openpilot.system.ui.widgets import Widget
 from openpilot.common.filter_simple import BounceFilter, FirstOrderFilter
 from openpilot.common.transformations.camera import DEVICE_CAMERAS, DeviceCameraConfig, view_frame_from_device_frame
 from openpilot.common.transformations.orientation import rot_from_euler
+from openpilot.starpilot.car.chrysler.camera_height import active_small_model_id, height_matrix, road_camera_height_scale
 from enum import IntEnum
 
 OpState = log.SelfdriveState.OpenpilotState
@@ -432,7 +433,8 @@ class AugmentedRoadView(CameraView):
       return
 
     # Update view_from_calib matrix
-    device_from_calib = rot_from_euler(calib.rpyCalib)
+    # match the height correction the model sees, so lanes and path are drawn on the road (camera_height.py)
+    device_from_calib = rot_from_euler(calib.rpyCalib) @ height_matrix(road_camera_height_scale(ui_state.CP, active_small_model_id()))
     self.view_from_calib = view_frame_from_device_frame @ device_from_calib
 
     # Update wide calibration if available

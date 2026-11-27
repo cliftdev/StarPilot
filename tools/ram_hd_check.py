@@ -97,6 +97,30 @@ def main():
     assert blocking_fault_mask((1 << 3) | (1 << 2), p)
   assert blocking_fault_list([F.interruptRateCan2], cp15), "Ram 1500 must keep StarPilot's default"
   print("panda fault policy: interruptRateCan2 allowed on the HD only: OK")
+
+  # The comma sits ~1.88 m up; Cheddar thinks 1.33 m and reads lanes too narrow for Lane Centering. The model is shown the
+  # road as from a camera that much lower; other cars, other models and the identity case are unchanged.
+  import numpy as np
+  from openpilot.common.transformations.model import get_warp_matrix
+  from openpilot.common.transformations.camera import DEVICE_CAMERAS
+  from openpilot.starpilot.car.chrysler.camera_height import road_camera_height_scale
+  k = road_camera_height_scale(cp, "cheddar")
+  assert abs(k - 1.88 / 1.33) < 1e-6, k
+  assert road_camera_height_scale(cp, "some_other_model") == 1.0 and road_camera_height_scale(cp15, "cheddar") == 1.0
+  intr = DEVICE_CAMERAS[("mici", "os04c10")].narrow_road.intrinsics
+  rpy = np.array([0.0, 0.03, -0.01])
+  assert np.allclose(get_warp_matrix(rpy, intr, False, 1.0), get_warp_matrix(rpy, intr, False))
+  # a road point the real camera sees along (X, Y, h) must be drawn where a camera at h/k sees it: (X, Y, h/k)
+  from openpilot.common.transformations.model import calib_from_medmodel
+  from openpilot.common.transformations.orientation import rot_from_euler
+  from openpilot.common.transformations.camera import view_frame_from_device_frame
+  W = get_warp_matrix(rpy, intr, False, k)
+  X, Y, h = 30.0, 1.8, 1.88
+  model_px = np.linalg.inv(calib_from_medmodel) @ np.array([X, Y, h / k])
+  cam_px = W @ (model_px / model_px[2])
+  real_px = intr @ view_frame_from_device_frame @ rot_from_euler(rpy) @ np.array([X, Y, h])
+  assert np.allclose(cam_px[:2] / cam_px[2], real_px[:2] / real_px[2], atol=1e-6)
+  print(f"road camera height correction: x{k:.3f} for Cheddar on the HD only: OK")
   print("ALL OK")
 
 

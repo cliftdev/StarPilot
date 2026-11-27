@@ -39,6 +39,7 @@ from openpilot.common.realtime import config_realtime_process, set_core_affinity
 from openpilot.common.transformations.camera import DEVICE_CAMERAS
 from openpilot.system.camerad.cameras.nv12_info import get_nv12_info
 from openpilot.common.transformations.model import get_warp_matrix
+from openpilot.starpilot.car.chrysler.camera_height import road_camera_height_scale
 from openpilot.selfdrive.controls.lib.desire_helper import DesireHelper
 from openpilot.starpilot.lateral.lane_change_preferences import LiveLaneChangePolicy
 from openpilot.starpilot.lateral.auto_lane_change import (
@@ -572,10 +573,11 @@ def main(demo=False):
       device_from_calib_euler = np.array(sm["extrinsicsCalibration"].rpyCalib, dtype=np.float32)
       dc = DEVICE_CAMERAS[(str(sm['deviceState'].deviceType), str(sm['narrowRoadCameraState'].sensor))]
       main_intrinsics = dc.wide_road.intrinsics if main_wide_camera else dc.narrow_road.intrinsics
-      model_transform_main = get_warp_matrix(device_from_calib_euler, main_intrinsics, False).astype(np.float32)
+      height_scale = road_camera_height_scale(CP, model.model_id)
+      model_transform_main = get_warp_matrix(device_from_calib_euler, main_intrinsics, False, height_scale).astype(np.float32)
       has_wide_camera = use_extra_client or main_wide_camera
       extra_intrinsics = dc.wide_road.intrinsics if has_wide_camera else dc.narrow_road.intrinsics
-      model_transform_extra = get_warp_matrix(device_from_calib_euler, extra_intrinsics, True).astype(np.float32)
+      model_transform_extra = get_warp_matrix(device_from_calib_euler, extra_intrinsics, True, height_scale).astype(np.float32)
       extrinsics_calibration_seen = True
 
     traffic_convention = np.zeros(2)

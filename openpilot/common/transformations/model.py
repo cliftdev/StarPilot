@@ -62,9 +62,13 @@ calib_from_medmodel = np.linalg.inv(medmodel_frame_from_calib_frame[:, :3])
 calib_from_sbigmodel = np.linalg.inv(sbigmodel_frame_from_calib_frame[:, :3])
 
 # This function is verified to give similar results to xx.uncommon.utils.transform_img
-def get_warp_matrix(device_from_calib_euler: np.ndarray, intrinsics: np.ndarray, bigmodel_frame: bool = False) -> np.ndarray:
+def get_warp_matrix(device_from_calib_euler: np.ndarray, intrinsics: np.ndarray, bigmodel_frame: bool = False,
+                    height_scale: float = 1.0) -> np.ndarray:
   calib_from_model = calib_from_sbigmodel if bigmodel_frame else calib_from_medmodel
   device_from_calib = rot_from_euler(device_from_calib_euler)
   camera_from_calib = intrinsics @ view_frame_from_device_frame @ device_from_calib
+  if height_scale != 1.0:
+    # show the model the road as from a camera height_scale times lower (starpilot/car/chrysler/camera_height.py)
+    camera_from_calib = camera_from_calib @ np.diag([1.0, 1.0, height_scale])
   warp_matrix: np.ndarray = camera_from_calib @ calib_from_model
   return warp_matrix
